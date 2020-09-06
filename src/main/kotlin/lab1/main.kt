@@ -11,10 +11,6 @@ fun main() {
         Operation("+", 3),
         Operation("*", 2),
     )
-    val reverseOperations1 = arrayOf(
-        Operation("-", 3),
-        Operation("/", 2),
-    )
     val operations2 = arrayOf(
         Operation("+", 3),
         Operation("*", 2),
@@ -23,7 +19,7 @@ fun main() {
 
     println("+3, *2")
     val straightforwardStartTime = System.currentTimeMillis()
-    val straightforwardRouteState = findStraightforwardRoute(startValue, endValue, operations1)
+    val straightforwardRouteState = findRoute(startValue, endValue, operations1)
     val straightforwardEndTime = System.currentTimeMillis()
     val straightforwardRoute = restoreRoute(straightforwardRouteState)
     println(straightforwardRoute)
@@ -31,7 +27,7 @@ fun main() {
 
     println("\n+3, *2 обратным поиском")
     val reverseStartTime = System.currentTimeMillis()
-    val reverseRouteState = findStraightforwardRoute(endValue, startValue, reverseOperations1)
+    val reverseRouteState = findRoute(endValue, startValue, operations1, true)
     val reverseEndTime = System.currentTimeMillis()
     val reverseRoute = restoreRoute(reverseRouteState, true)
     println(reverseRoute)
@@ -39,15 +35,19 @@ fun main() {
 
     println("\n+3, *2, -2")
     val threeOpsStartTime = System.currentTimeMillis()
-    val threeOpsState = findStraightforwardRoute(startValue, endValue, operations2)
+    val threeOpsState = findRoute(startValue, endValue, operations2)
     val threeOpsEndTime = System.currentTimeMillis()
     val threeOpsRoute = restoreRoute(threeOpsState)
     println(threeOpsRoute)
     println((threeOpsEndTime - threeOpsStartTime) / 1000.0)
 }
 
-fun findStraightforwardRoute(start: Int, result: Int, operations: Array<Operation>): State {
+fun findRoute(start: Int, result: Int, operations: Array<Operation>, reverse: Boolean = false): State {
     val startState = State(start, null, null)
+
+    val usedOperations = operations.copyOf()
+    if (reverse)
+        reverseOperationsSigns(usedOperations)
 
     val stateQueue = LinkedList<State>()
     val stateSet = HashSet<Int>()
@@ -56,15 +56,15 @@ fun findStraightforwardRoute(start: Int, result: Int, operations: Array<Operatio
     while (!stateQueue.isEmpty()) {
         val current = stateQueue.pop()
         stateSet.add(current.value)
-        for (operation in operations) {
+        for (operation in usedOperations) {
             if (operation.sign == "/" && !divides(current.value, operation.operand))
                 continue
             val newState = operation.applyTo(current)
             if (stateSet.contains(newState.value))
                 continue
-            if (newState.value == result)
+            if (newState.value == result) {
                 return newState
-
+            }
             stateSet.add(newState.value)
             stateQueue.addLast(newState)
         }
@@ -97,6 +97,11 @@ val ops = hashMapOf(
     "/" to "*",
     "*" to "/"
 )
+
+fun reverseOperationsSigns(operations: Array<Operation>) {
+    for (operation in operations)
+        operation.sign = ops[operation.sign]!!
+}
 
 fun divides(leftOp: Int, rightOp: Int): Boolean {
     return leftOp % rightOp == 0

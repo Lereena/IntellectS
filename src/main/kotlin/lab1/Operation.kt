@@ -2,7 +2,7 @@ package lab1
 
 import java.lang.Exception
 
-class Operation constructor(val sign: String, val operand: Int) {
+class Operation constructor(var sign: String, val operand: Int) {
     fun applyTo(leftOperand: State): State {
         val resultValue = when (sign) {
             "+" -> leftOperand.value + operand
