@@ -15,11 +15,18 @@ fun main() {
 
     //game = State(intArrayOf(15, 2, 3, 4, 5, 6, 7, 8, 10, 0, 11, 14, 9, 1, 13, 12), null, 9) // 33
     //game = State(intArrayOf(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0), null, 15)
-    //game = State(intArrayOf(1, 2, 3, 4, 5, 6, 7, 0, 9, 10, 11, 8, 13, 14, 15, 12), null, 7) // 2
+//    game = State(intArrayOf(1, 2, 3, 4, 5, 6, 7, 0, 9, 10, 11, 8, 13, 14, 15, 12), null, 7) // 2
 //    game = State(intArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 12, 9, 11, 10, 13, 0, 14, 15), null, 13) // 16
     game = State(intArrayOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 11, 12, 13, 14, 15, 10), null, 9) // 11
-    val solved = bfs(game, operations)
-    println(solved.restoreRoute())
+    println("BFS:")
+    val bfsSolved = bfs(game, operations)
+    println(bfsSolved.restoreRoute())
+    println("\nDFS:")
+    val dfsSolved = dfs(game, operations)
+    println(dfsSolved.restoreRoute())
+    println("\nIDFS:")
+    val idfsSolved = idfs(game, operations)
+    println(idfsSolved.restoreRoute())
 }
 
 fun solvedState(): State {

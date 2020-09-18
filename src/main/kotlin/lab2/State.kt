@@ -67,17 +67,16 @@ class State constructor(val value: IntArray, val parent: State?, val zeroPositio
         var current: State? = this
         var result = current.toString()
         current = current?.parent
+        var count = 0
         while (current != null) {
             val parent = current.parent
             result = "$current\n->$result"
             current = parent
+            count++
         }
-
+        result += "\n$count шагов"
         return result
     }
-//    override fun toString(): String {
-//        return "$value [${parent?.value}]"
-//    }
 }
 
 class StateOperation(val isApplicable: (State) -> Boolean, val applyTo: (State) -> State) {
