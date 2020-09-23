@@ -3,6 +3,7 @@ package lab2
 import java.lang.Exception
 import java.util.*
 import kotlin.collections.HashSet
+import kotlin.math.abs
 
 val solvedState = solvedState().toString()
 
@@ -81,3 +82,50 @@ fun idfs(startState: State, operations: Array<StateOperation>): State {
 
     throw Exception("Incorrect outer idfs")
 }
+
+fun astar(startState: State, operations: Array<StateOperation>): State {
+    if (!startState.isSolvable())
+        throw Exception("Game is not solvable.")
+
+    val closed = HashSet<String>()
+    val open = PriorityQueue<Pair<State, AstarCharacteristics>>(compareBy { x -> x.second.f })
+    var h = heuristics(startState)
+    var g = 0
+
+    var currentState = Pair(startState, AstarCharacteristics(g + h, g, h))
+    open.add(currentState)
+    while (open.isNotEmpty()) {
+        currentState = open.remove()
+        val stringState = currentState.first.toString()
+        if (stringState == solvedState)
+            return currentState.first
+
+        if (!closed.contains(stringState)) {
+            closed.add(stringState)
+            for (operation in operations) {
+                if (!operation.isApplicable(currentState.first))
+                    continue
+                val newState = operation.applyTo(currentState.first)
+                h = heuristics(newState)
+                g = currentState.second.g + 1
+                open.add(Pair(newState, AstarCharacteristics(g + h, g, h)))
+            }
+        }
+    }
+
+    throw Exception("Incorrect astar")
+}
+
+fun heuristics(state: State): Int {
+    var result = 0
+    for (i in 0 until 16) {
+        var first = state.value[i] - 1
+        val second = i
+        if (first == -1)
+            first = 15
+        result += abs(first % 4 - second % 4) + abs(first / 4 - second / 4)
+    }
+    return result
+}
+
+class AstarCharacteristics(val f: Int, val g: Int, val h: Int)
