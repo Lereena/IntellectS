@@ -83,40 +83,6 @@ fun idfs(startState: State, operations: Array<StateOperation>): State {
     throw Exception("Incorrect outer idfs")
 }
 
-fun astar(startState: State, operations: Array<StateOperation>): State {
-    if (!startState.isSolvable())
-        throw Exception("Game is not solvable.")
-
-    val closed = HashSet<String>()
-    val open = PriorityQueue<State>(compareBy { x -> x.f })
-//    val h = heuristics(startState)
-//    val g = 0
-
-    var currentState = startState
-    currentState.h = heuristics(currentState)
-    open.add(currentState)
-    while (open.isNotEmpty()) {
-        currentState = open.remove()
-        val stringState = currentState.toString()
-        if (stringState == solvedState)
-            return currentState
-
-        if (!closed.contains(stringState)) {
-            closed.add(stringState)
-            for (operation in operations) {
-                if (!operation.isApplicable(currentState))
-                    continue
-                val newState = operation.applyTo(currentState)
-                newState.g = (currentState.g + 1).toShort()
-                newState.h = heuristics(newState)
-                open.add(newState)
-            }
-        }
-    }
-
-    throw Exception("Incorrect astar")
-}
-
 fun heuristics(state: State): Short {
     var result = 0
     for (i in 0 until 16) {
@@ -149,7 +115,7 @@ fun heuristics(state: State): Short {
     return result.toShort()
 }
 
-fun astar2(startState: State, operations: Array<StateOperation>): State {
+fun astar(startState: State, operations: Array<StateOperation>): State {
     if (!startState.isSolvable())
         throw Exception("Game is not solvable.")
 
@@ -187,4 +153,45 @@ fun astar2(startState: State, operations: Array<StateOperation>): State {
     }
 
     throw Exception("Incorrect astar")
+}
+
+fun idastar(startState: State, operations: Array<StateOperation>): State {
+    if (!startState.isSolvable())
+        throw Exception("Game is not solvable.")
+
+    var treshold = heuristics(startState)
+
+    while (true) {
+        val temp = idastarStep(startState, operations, 0, treshold)
+        if (temp.second.isSolved())
+            return temp.second
+        treshold = temp.first
+    }
+}
+
+fun idastarStep(state: State, operations: Array<StateOperation>, g: Int, treshold: Short): Pair<Short, State> {
+    val f = g + heuristics(state)
+    if (f > treshold)
+        return Pair(f.toShort(), state)
+    if (state.isSolved())
+        return Pair(-1, state)
+
+    var min = Int.MAX_VALUE
+    for (operation in operations) {
+        if (!operation.isApplicable(state))
+            continue
+        val newState = operation.applyTo(state)
+        if (if (state.parent != null)
+                newState.getHash() == state.parent.getHash()
+            else false
+        )
+            continue
+
+        val temp = idastarStep(newState, operations, g + 1, treshold)
+        if (temp.first == (-1).toShort())
+            return temp
+        if (temp.first < min)
+            min = temp.first.toInt()
+    }
+    return Pair(min.toShort(), state)
 }
