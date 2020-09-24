@@ -46,7 +46,7 @@ class State constructor(
         return builder.toString()
     }
 
-    fun restoreRoute(): String {
+    fun restoreRoute(): Pair<String, Int> {
         var current: State? = this
         var result = current.toString()
         current = current?.parent
@@ -58,7 +58,7 @@ class State constructor(
             count++
         }
         result += "\n$count шагов"
-        return result
+        return Pair(result, count)
     }
 
     fun getHash(): Int {
