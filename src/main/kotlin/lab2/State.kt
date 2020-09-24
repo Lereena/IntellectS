@@ -2,64 +2,47 @@ package lab2
 
 import java.lang.StringBuilder
 
-class State constructor(val value: IntArray, val parent: State?, val zeroPosition: Int) {
+class State constructor(
+    val value: ByteArray, var g: Short = 0, var h: Short = 0, val parent: State? = null
+) {
+    var f = g + h
+    val zeroPosition = getZero()
+
+    private fun getZero(): Int {
+        return value.indexOf(0)
+    }
+
     fun isSolvable(): Boolean {
         var inv = 0
         for (i in value.indices)
-            if (value[i] != 0)
+            if (value[i] != (0u).toByte())
                 for (j in 0 until i)
                     if (value[j] > value[i])
                         inv++
         for (i in value.indices)
-            if (value[i] == 0)
+            if (value[i] == (0u).toByte())
                 inv += 1 + i / 4
 
         return inv % 2 == 0
     }
 
+    fun isSolved(): Boolean {
+        return getHash() == 82800377
+    }
+
     fun move(steps: Int): State {
-        val newValue = IntArray(value.size)
+        val newValue = ByteArray(value.size)
         value.copyInto(newValue)
         newValue[zeroPosition] = newValue[zeroPosition + steps]
         newValue[zeroPosition + steps] = 0
-        val newZeroPosition = zeroPosition + steps
 
-        return State(newValue, this, newZeroPosition)
+        return State(newValue, parent = this)
     }
 
     override fun toString(): String {
         val builder = StringBuilder()
         for (pos in value.indices)
             builder.append("(" + value[pos] + ")")
-        return builder.toString()
-    }
-
-    fun gridView(): String {
-        val builder = StringBuilder()
-        for (steps in 0 until 4)
-            builder.append("————")
-        builder.append("\n")
-        for (pos in 0 until 16) {
-            val value = value[pos]
-            if (value < 10) {
-                builder.append("| ")
-                if (value != 0)
-                    builder.append(value)
-                builder.append("\t")
-            } else {
-                builder.append("|")
-                if (value != 0)
-                    builder.append(value)
-                builder.append(" ")
-            }
-            if ((pos + 1) % 4 == 0) {
-                builder.append("|\n")
-                for (steps in 0 until 4)
-                    builder.append("————")
-                builder.append("\n")
-            }
-        }
-
         return builder.toString()
     }
 
@@ -76,6 +59,10 @@ class State constructor(val value: IntArray, val parent: State?, val zeroPositio
         }
         result += "\n$count шагов"
         return result
+    }
+
+    fun getHash(): Int {
+        return value.contentHashCode()
     }
 }
 
