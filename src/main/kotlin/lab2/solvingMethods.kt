@@ -5,27 +5,28 @@ import java.util.*
 import kotlin.collections.HashSet
 import kotlin.math.abs
 
-val solvedState = solvedState().toString()
-
 fun bfs(startState: State, operations: Array<StateOperation>): State {
     if (!startState.isSolvable())
         throw Exception("Game is not solvable.")
-    if (startState.toString() == solvedState)
+    if (startState.isSolved())
         return startState
     val stateQueue = LinkedList<State>()
-    val stateSet = HashSet<String>()
+    val stateSet = HashSet<Int>()
     stateQueue.add(startState)
 
     while (!stateQueue.isEmpty()) {
         val current = stateQueue.pop()
-        stateSet.add(current.toString())
+        stateSet.add(current.getHash())
+
         for (operation in operations) {
             if (!operation.isApplicable(current))
                 continue
             val newState = operation.applyTo(current)
-            if (stateSet.contains(newState.toString()))
+
+            if (stateSet.contains(newState.getHash())
+                || isStepDown(current, newState))
                 continue
-            if (newState.toString() == solvedState)
+            if (newState.isSolved())
                 return newState
             stateQueue.addLast(newState)
         }
@@ -34,8 +35,14 @@ fun bfs(startState: State, operations: Array<StateOperation>): State {
     throw Exception("Incorrect bfs")
 }
 
+fun isStepDown(current: State, new: State): Boolean {
+    return if (current.parent != null)
+        new.getHash() == current.parent.getHash()
+    else false
+}
+
 fun dfsStep(state: State, operations: Array<StateOperation>, limit: Int = 80): Pair<State?, Int> {
-    if (state.toString() == solvedState)
+    if (state.isSolved())
         return Pair(state, limit)
 
     if (limit == 0)
@@ -64,7 +71,7 @@ fun dfs(startState: State, operations: Array<StateOperation>): State {
     }
 
     while (solution.first != null) {
-        if (solution.first.toString() == solvedState)
+        if (solution.first!!.isSolved())
             return solution.first!!
     }
     throw Exception("Incorrect outer dfs")
@@ -138,12 +145,9 @@ fun astar(startState: State, operations: Array<StateOperation>): State {
                 if (!operation.isApplicable(currentState))
                     continue
                 val newState = operation.applyTo(currentState)
-                if (if (currentState.parent != null)
-                        newState.getHash() == currentState.parent!!.getHash()
-                    else
-                        false
-                )
+                if (isStepDown(currentState, newState))
                     continue
+
                 newState.g = (currentState.g + 1).toShort()
                 newState.h = heuristics(newState)
                 newState.f = newState.g + newState.h
@@ -181,10 +185,7 @@ fun idastarStep(state: State, operations: Array<StateOperation>, g: Int, treshol
         if (!operation.isApplicable(state))
             continue
         val newState = operation.applyTo(state)
-        if (if (state.parent != null)
-                newState.getHash() == state.parent.getHash()
-            else false
-        )
+        if (isStepDown(state, newState))
             continue
 
         val temp = idastarStep(newState, operations, g + 1, treshold)
