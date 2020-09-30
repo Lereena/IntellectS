@@ -1,6 +1,5 @@
 package ind1
 
-import lab2.StateOperation
 import java.lang.Exception
 import java.util.*
 import kotlin.collections.HashSet
@@ -41,7 +40,7 @@ fun isStepDown(current: State): Boolean {
     else false
 }
 
-fun dfsStep(state: State, limit: Int = 15): Pair<State?, Int> {
+fun dfsStep(state: State, limit: Int = 30): Pair<State?, Int> {
     if (state.isSolved())
         return Pair(state, limit)
 
