@@ -4,6 +4,12 @@ fun main() {
     val startState = State(3, 3, true)
     println("\nBFS:")
     measureTime(startState) { state -> bfs(state) }
+
+    println("\nIDFS:")
+    measureTime(startState) { state -> idfs(state) }
+
+    println("\nDFS:")
+    measureTime(startState) { state -> dfs(state) }
 }
 
 fun measureTime(state: State, action: (State) -> State) {
@@ -13,7 +19,7 @@ fun measureTime(state: State, action: (State) -> State) {
         val endTime = System.currentTimeMillis()
         val route = solution.restoreRoute()
         println(route.first)
-        println(route.second.toString() + " шагов")
+//        println(route.second.toString() + " шагов")
         println((endTime - startTime) / 1000.0)
     } catch (e: OutOfMemoryError) {
         println("Съел всю память")
