@@ -6,15 +6,15 @@ import kotlin.system.exitProcess
 
 class Game(first: Player) {
     var board: Array<GameColor> = Array(24) { GameColor.F }
-    val userColor: GameColor = if (first == Player.USER) GameColor.W else GameColor.B
-    val aiColor: GameColor = if (first == Player.AI) GameColor.W else GameColor.B
-    var turn: Player = first
-    var nextStepPoint = 0
-    val depth = 3
-    val alpha = Int.MIN_VALUE;
-    val beta = Int.MAX_VALUE
-    var pruned = 0
-    var reachedStates = 0
+    private val userColor: GameColor = if (first == Player.USER) GameColor.W else GameColor.B
+    private val aiColor: GameColor = if (first == Player.AI) GameColor.W else GameColor.B
+    private var turn: Player = first
+    private var nextStepPoint = 0
+    private val depth = 3
+    private val alpha = Int.MIN_VALUE;
+    private val beta = Int.MAX_VALUE
+    private var pruned = 0
+    private var reachedStates = 0
 
     fun start() {
         println("Первая стадия: начальная расстановка")
@@ -23,10 +23,12 @@ class Game(first: Player) {
                 printBoard(board)
                 firstStageUserStep()
                 printBoard(board)
-                firstStageAIStep(step)
+                val aiStep = firstStageAIStep(step)
+                println(" $aiStep")
             } else {
                 printBoard(board)
-                firstStageAIStep(step)
+                val aiStep = firstStageAIStep(step)
+                println(" $aiStep")
                 printBoard(board)
                 firstStageUserStep()
             }
@@ -34,9 +36,11 @@ class Game(first: Player) {
 
         println("Вторая стадия: движение")
         while (true) {
-            if (turn == Player.AI)
+            if (turn == Player.AI) {
+                printBoard(board)
                 secondStageAIStep()
-            else {
+            } else {
+                printBoard(board)
                 secondStageUserStep()
                 when {
                     evaluateState() == aiColor -> println("Компьютер выиграл")
@@ -55,7 +59,7 @@ class Game(first: Player) {
     }
 
     private fun secondStageUserStep() {
-        print("Ход пользователя:")
+        println("Ход пользователя (два числа на разных строках):")
         val fromPosition = validUserFrom()
         val toPosition = validUserTo(fromPosition)
         board[fromPosition] = GameColor.F
@@ -63,11 +67,12 @@ class Game(first: Player) {
         turn = Player.AI
     }
 
-    private fun firstStageAIStep(step: Int) {
-        println("Ход компьютера:")
+    private fun firstStageAIStep(step: Int): Int {
+        print("Ход компьютера:")
 
         if (step == 0) {
-            randomStep()
+            turn = Player.USER
+            return randomStep()
         } else {
             while (true) {
                 val point = nextStepPoint
@@ -75,33 +80,110 @@ class Game(first: Player) {
                     val pointForMill = pointForMill(point)
                     if (pointForMill != -1) {
                         board[pointForMill] = aiColor
-                        nextStepPoint = point
-                        break
+                        nextStepPoint = pointForMill
+                        turn = Player.USER
+                        return nextStepPoint
                     }
                 } else
                     for (neighbor in neighbors(point))
                         if (board[neighbor] == GameColor.F) {
                             board[neighbor] = aiColor
                             nextStepPoint = neighbor
-                            break
+                            turn = Player.USER
+                            return nextStepPoint
                         }
-                randomStep()
-                break
+                turn = Player.USER
+                return randomStep()
             }
         }
+    }
+
+    private fun secondStageAIStep() {
+        print("Ход компьютера: ")
+        val move: Pair<Int, Int>
+        val evaluation = alphaBetaPruning()
+        if (evaluation.evaluator == Int.MIN_VALUE) {
+            print("Компьютер выиграл")
+            exitProcess(0)
+        } else {
+            move = subtractBoards(board, evaluation.board)
+            board = evaluation.board
+        }
+        println("${move.first} -> ${move.second}")
         turn = Player.USER
     }
 
-    private fun randomStep() {
+    private fun validUserFrom(): Int {
+        var position: Int?
+        while (true) {
+            val line = readLine()!!.trim()
+            if (line == "") {
+                println("Введите число от 0 до 23")
+                continue
+            }
+            position = line.toInt()
+            if (position !in 0..23) {
+                println("Введите число от 0 до 23")
+                continue
+            }
+            if (board[position] != userColor) {
+                println("На этой позиции нет вашей фишки")
+                continue
+            }
+            return position
+        }
+    }
+
+    private fun validUserTo(startPosition: Int? = null): Int {
+        var position: Int?
+        while (true) {
+            val line = readLine()!!.trim()
+            if (line == "") {
+                println("Введите число от 0 до 23")
+                continue
+            }
+            position = line.toInt()
+            if (position !in 0..23) {
+                println("Введите число от 0 до 23")
+                continue
+            }
+            if (!freePlace(position)) {
+                println("Это место уже занято")
+                continue
+            }
+            if (startPosition != null && position == startPosition) {
+                println("Фишка уже на этой позиции")
+                continue
+            }
+            // TODO добавить проверку на движение по линиям
+            return position
+        }
+    }
+
+    private fun randomStep(): Int {
         var position = nextInt(0, 23)
         while (!freePlace(position))
             position = nextInt(0, 23)
         board[position] = aiColor
         nextStepPoint = position
+        return position
     }
 
     private fun neighbors(point: Int): Array<Int> {
         return neighbors[point]
+    }
+
+    private fun subtractBoards(begin: Array<GameColor>, end: Array<GameColor>): Pair<Int, Int> {
+        var from = 0
+        var to = 0
+        for (i in begin.indices) {
+            if (begin[i] != end[i])
+                if (end[i] == GameColor.F)
+                    from = i
+                else
+                    to = i
+        }
+        return Pair(from, to)
     }
 
     private fun pointForMill(point: Int): Int {
@@ -129,18 +211,6 @@ class Game(first: Player) {
 
     private fun checkMillFormation(color: GameColor, p1: Int, p2: Int): Boolean {
         return board[p1] == color && board[p2] == color
-    }
-
-    private fun secondStageAIStep() {
-        println("Ход компьютера:")
-        val evaluation = alphaBetaPruning()
-        if (evaluation.evaluator == Int.MIN_VALUE) {
-            print("Компьютер выиграл")
-            exitProcess(0)
-        } else
-            board = evaluation.board
-
-        turn = Player.USER
     }
 
     private fun alphaBetaPruning(
@@ -243,7 +313,8 @@ class Game(first: Player) {
             val linesNeighbors = linesNeighbors[i]
             if (board[i] == color
                 && (checkMillFormation(color, linesNeighbors[0], linesNeighbors[1])
-                        || checkMillFormation(color, linesNeighbors[2], linesNeighbors[3])))
+                        || checkMillFormation(color, linesNeighbors[2], linesNeighbors[3]))
+            )
                 return true
         }
         return false
@@ -347,43 +418,6 @@ class Game(first: Player) {
 
     private fun freePlace(position: Int): Boolean {
         return board[position] == GameColor.F
-    }
-
-    private fun validUserTo(startPosition: Int? = null): Int {
-        var position: Int?
-        while (true) {
-            position = readLine()?.toInt()
-            if (position == null || position !in 0..23) {
-                println("Введите число от 0 до 23")
-                continue
-            }
-            if (!freePlace(position)) {
-                println("Это место уже занято")
-                continue
-            }
-            if (startPosition != null && position == startPosition) {
-                println("Фишка уже на этой позиции")
-                continue
-            }
-            // TODO добавить проверку на движение по линиям
-            return position
-        }
-    }
-
-    private fun validUserFrom(): Int {
-        var position: Int?
-        while (true) {
-            position = readLine()?.toInt()
-            if (position == null || position !in 0..23) {
-                println("Введите число от 0 до 23")
-                continue
-            }
-            if (board[position] != userColor) {
-                println("На этой позиции нет вашей фишки")
-                continue
-            }
-            return position
-        }
     }
 
     private fun evaluateState(): GameColor {
