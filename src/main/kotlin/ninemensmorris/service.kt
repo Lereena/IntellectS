@@ -16,6 +16,19 @@ fun printBoard(b: Array<GameColor>) {
     println("${b[5]}(5)---------------------- ${b[6]}(6)---------------------- ${b[7]}(7)")
 }
 
+fun subtractBoards(begin: Board, end: Board): Pair<Int, Int> {
+    var from = 0
+    var to = 0
+    for (i in begin.indices) {
+        if (begin[i] != end[i])
+            if (end[i] == GameColor.F)
+                from = i
+            else
+                to = i
+    }
+    return Pair(from, to)
+}
+
 val neighbors = arrayOf(
     arrayOf(1, 3),
     arrayOf(0, 2, 9),
