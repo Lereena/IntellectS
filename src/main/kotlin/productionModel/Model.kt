@@ -37,20 +37,20 @@ class Model(factsPath: String, rulesPath: String) {
     }
 
     fun forward(startFacts: Array<String>): ArrayList<Fact> {
-        val state = Array(facts.size) { false }
+        val currentState = Array(facts.size) { false }
         val rulesSet = HashSet<Rule>(rules)
-        startFacts.forEach { desc -> state[descriptionsToFacts[desc]!!.id] = true }
+        startFacts.forEach { description -> currentState[descriptionsToFacts[description]!!.id] = true }
 
-        var flag = true
-        while (flag) {
+        var remove = true
+        while (remove) {
             val toRemove = ArrayList<Rule>()
-            flag = false
+            remove = false
             for (rule in rulesSet) {
-                val newFact = rule.apply(state)
+                val newFact = rule.apply(currentState)
                 if (newFact != null) {
-                    state[newFact.id] = true
+                    currentState[newFact.id] = true
                     toRemove.add(rule)
-                    flag = true
+                    remove = true
                     break
                 }
             }
@@ -58,8 +58,8 @@ class Model(factsPath: String, rulesPath: String) {
         }
 
         val result = ArrayList<Fact>()
-        for (i in state.indices)
-            if (state[i])
+        for (i in currentState.indices)
+            if (currentState[i])
                 result.add(facts[i])
 
         return result
@@ -74,8 +74,8 @@ class Model(factsPath: String, rulesPath: String) {
             factNodes[descriptionsToFacts[description]!!.id] =
                 Node(descriptionsToFacts[description], null, ArrayList(), 0)
 
-        val temp = Rule(-1, endFacts.map { description -> descriptionsToFacts[description] }, null)
-        val firstNode = Node(null, temp, ArrayList(), Int.MIN_VALUE, temp.antecedents.size)
+        val fakeRule = Rule(-1, endFacts.map { description -> descriptionsToFacts[description] }, null)
+        val firstNode = Node(null, fakeRule, ArrayList(), Int.MIN_VALUE, fakeRule.antecedents.size)
         queue.addLast(firstNode)
 
         while (queue.size != 0 && firstNode.wrongChildren != 0) {
