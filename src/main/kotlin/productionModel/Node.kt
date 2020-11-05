@@ -1,15 +1,7 @@
 package productionModel
 
-class Node(val set: HashSet<String>, val parent: Node?, val rule: Rule?) {
-    override fun equals(other: Any?): Boolean {
-        val node = other as Node? ?: return false
-        return set == node.set
-    }
+class Node(val fact: Fact?, val rule: Rule?, val parents: ArrayList<Node>?, var depth: Int, var wrongChildren: Int = 0) {
+    val children: ArrayList<Node?> = ArrayList()
 
-    override fun hashCode(): Int {
-        var hash = 0
-        for (elem in set)
-            hash += elem.hashCode()
-        return hash
-    }
+    fun addChild(node: Node?) = children.add(node)
 }

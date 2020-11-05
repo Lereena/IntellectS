@@ -1,10 +1,22 @@
 package productionModel
 
-class Rule(val antecedents: List<String>, val consequent: String, val final: Boolean = false) {
+import java.lang.StringBuilder
+
+class Rule(val id: Int, val antecedents: List<Fact?>, val consequent: Fact?) {
+    fun apply(state: Array<Boolean>): Fact? {
+        for (antecedent in antecedents)
+            if (!state[antecedent!!.id])
+                return null
+
+        return consequent
+    }
+
     override fun toString(): String {
-        var antenc = antecedents[0]
-        for (i in 1 until antecedents.size)
-            antenc += "," + antecedents[i]
-        return antecedents.joinToString(", ") + " -> " + consequent
+        val builder = StringBuilder()
+        for (antecedent in antecedents)
+            builder.append("${antecedent!!.description}, ");
+        builder.removeRange((builder.length - 2) until builder.length)
+        builder.append(" -> ${consequent!!.description}")
+        return builder.toString()
     }
 }
